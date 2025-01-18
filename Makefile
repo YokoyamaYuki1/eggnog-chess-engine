@@ -27,36 +27,20 @@ FILE = ./bin/eggnog-chess-engine
 COMMONFLAGS = -O3 -fcommon -I Fathom
 
 ifeq ($(RELEASE), true)
-COMMONFLAGS = -O3 -fcommon -DRELEASE -I Fathom
+COMMONFLAGS += -DRELEASE
 endif
 
-ifeq ($(OS), linux)
 EXECUTABLE_FILENAME =
 CC=gcc
 LINK_OPTS = -lpthread -lm
-else ifeq ($(OS), mac)
-EXECUTABLE_FILENAME =
-CC=gcc
-LINK_OPTS = -lpthread -lm
-else
-EXECUTABLE_FILENAME =.exe
-CC=x86_64-w64-mingw32-gcc
-LINK_OPTS = -lm
-endif
 
 release:
-	mkdir -p ./bin/eggnog-windows
 	mkdir -p ./bin/eggnog-linux
-	cp ./bin/network.nnom ./bin/eggnog-windows/
 	cp ./bin/network.nnom ./bin/eggnog-linux/
 	cp ./bin/network.nnue ./bin/eggnog-linux/
-	cp ./bin/network.nnue ./bin/eggnog-windows/
 
 	make all
 	mv ./bin/eggnog-chess-engine* ./bin/eggnog-linux/
-	make clean
-	make all OS=win
-	mv ./bin/eggnog-chess-engine* ./bin/eggnog-windows/
 	make clean
 
 all: avx2 avx sse sse2 popcnt
@@ -94,26 +78,11 @@ popcnt: $(POPCNT_OBJS)
 Fathom/%.o: Fathom/%.c
 	$(CC) $< $(COMMONFLAGS) -c -o $@
 
-mingw:
-	make OS=win
-
-mingwj:
-	make OS=win -j
-
 debug:
-	$(CC) $(CFILES) $(FATHOM_FILES) -pthread -o $(FILE)-debug
-
-gdb:
-	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(LINK_OPTS) $(CFILES) $(FATHOM_FILES) -g
-	mv ./a.out ./bin/a.out
-
-prof:
-	$(CC) -pg $(LINK_OPTS) -fcommon -DAVX2 -mavx2 -O3 $(CFILES) $(FATHOM_FILES) -o $(FILE)-prof
+	$(CC) $(CFILES) $(FATHOM_FILES) $(LINK_OPTS) -o $(FILE)-debug
 
 clean:
 	rm -f ./bin/a.out ./bin/gmon.out
 	rm -f ./bin/eggnog-chess-engine*
-	rm -f *.s
 	rm -f *.o
 	rm -f Fathom/*.o
-	rm -f $(AVX2_OBJS) $(AVX_OBJS) $(SSE2_OBJS) $(SSE_OBJS) $(POPCNT_OBJS)
