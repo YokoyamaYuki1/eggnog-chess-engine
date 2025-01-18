@@ -7,25 +7,27 @@ CFILES = main.c \
          search.c \
          timeman.c \
          transposition.c \
-         Fathom/*.c \
          nnue.c \
          see.c \
          nnom.c \
          moveorder.c
 
-AVX2_OBJS = $(CFILES:.c=.c.avx2.o)
-AVX_OBJS = $(CFILES:.c=.c.avx.o)
-SSE2_OBJS = $(CFILES:.c=.c.sse2.o)
-SSE_OBJS = $(CFILES:.c=.c.sse.o)
-POPCNT_OBJS = $(CFILES:.c=.c.popcnt.o)
+FATHOM_FILES = Fathom/tbchess.c Fathom/tbprobe.c
+FATHOM_OBJS = $(FATHOM_FILES:.c=.o)
+
+AVX2_OBJS = $(CFILES:.c=.c.avx2.o) $(FATHOM_OBJS)
+AVX_OBJS = $(CFILES:.c=.c.avx.o) $(FATHOM_OBJS)
+SSE2_OBJS = $(CFILES:.c=.c.sse2.o) $(FATHOM_OBJS)
+SSE_OBJS = $(CFILES:.c=.c.sse.o) $(FATHOM_OBJS)
+POPCNT_OBJS = $(CFILES:.c=.c.popcnt.o) $(FATHOM_OBJS)
 
 OS = linux
 RELEASE = false
 FILE = ./bin/eggnog-chess-engine
-COMMONFLAGS = -O3 -fcommon
+COMMONFLAGS = -O3 -fcommon -I Fathom
 
 ifeq ($(RELEASE), true)
-COMMONFLAGS = -O3 -fcommon -DRELEASE
+COMMONFLAGS = -O3 -fcommon -DRELEASE -I Fathom
 endif
 
 ifeq ($(OS), linux)
@@ -89,6 +91,9 @@ popcnt: $(POPCNT_OBJS)
 %.c.popcnt.o: %.c
 	$(CC) $< $(COMMONFLAGS) -D POPCNT -mpopcnt -c -o $@
 
+Fathom/%.o: Fathom/%.c
+	$(CC) $< $(COMMONFLAGS) -c -o $@
+
 mingw:
 	make OS=win
 
@@ -96,18 +101,19 @@ mingwj:
 	make OS=win -j
 
 debug:
-	$(CC) $(CFILES) -pthread -o $(FILE)-debug
+	$(CC) $(CFILES) $(FATHOM_FILES) -pthread -o $(FILE)-debug
 
 gdb:
-	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(LINK_OPTS) $(CFILES) -g
+	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(LINK_OPTS) $(CFILES) $(FATHOM_FILES) -g
 	mv ./a.out ./bin/a.out
 
 prof:
-	$(CC) -pg $(LINK_OPTS) -fcommon -DAVX2 -mavx2 -O3 $(CFILES) -o $(FILE)-prof
+	$(CC) -pg $(LINK_OPTS) -fcommon -DAVX2 -mavx2 -O3 $(CFILES) $(FATHOM_FILES) -o $(FILE)-prof
 
 clean:
 	rm -f ./bin/a.out ./bin/gmon.out
 	rm -f ./bin/eggnog-chess-engine*
 	rm -f *.s
-	rm -f *.o nnue/*.o Fathom/*.o
+	rm -f *.o
+	rm -f Fathom/*.o
 	rm -f $(AVX2_OBJS) $(AVX_OBJS) $(SSE2_OBJS) $(SSE_OBJS) $(POPCNT_OBJS)
