@@ -96,27 +96,27 @@ POPCNT_OBJS = search.c.popcnt.o \
 OS = linux
 RELEASE = false
 FILE = ./bin/eggnog-chess-engine
-COMMONFLAGS = -O3 -fcommon
+COMMONFLAGS = -O3 -fcommon -std=gnu11
 
 ifeq ($(RELEASE), true)
-COMMONFLAGS = -O3 -fcommon -DRELEASE
+COMMONFLAGS = -O3 -fcommon -DRELEASE -std=gnu11
 endif
 
 ifeq ($(OS), linux)
 
 EXECUTABLE_FILENAME =
-CC=clang
+CC ?= gcc
 LINK_OPTS = -lpthread -lm
 
 else ifeq ($(OS), mac)
 
 EXECUTABLE_FILENAME =.dmg
-CC=gcc
+CC ?= gcc
 LINK_OPTS = -lpthread -lm
 
 else
 EXECUTABLE_FILENAME =.exe
-CC=x86_64-w64-mingw32-gcc
+CC ?= x86_64-w64-mingw32-gcc
 LINK_OPTS = -l:libwinpthread.a -lm
 endif
 
@@ -134,7 +134,6 @@ release:
 	make all OS=win
 	mv ./bin/eggnog-chess-engine* ./bin/eggnog-windows/
 	make clean
-
 
 all: avx2 avx sse sse2 popcnt
 avx2: $(AVX2_OBJS)
